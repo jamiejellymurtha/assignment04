@@ -32,14 +32,30 @@ glimpse(data)
 # Data Visualization 01
 
 ```{r}
+acs2022 <- data |>
+  filter(YEAR == 2022) 
 
+acs2022 |>
+  filter(TRANTIME > 0, POVERTY > 0, FTOTINC > 0, FTOTINC < 9999998) |>
+  mutate(pov_level = case_when(
+    POVERTY < 100 ~ "earning <0% to 99% of poverty threshold",
+    POVERTY >= 100 & POVERTY < 501 ~ "earning 100% to 500% of poverty threshold",
+    POVERTY >= 501 ~ "earning 501%+ of poverty threshold")) |>
+  ggplot(aes(x = TRANTIME, fill = pov_level)) +
+  geom_histogram(color = "black", alpha = 0.4) +
+  theme(legend.position = "bottom", legend.direction = "vertical") +
+  labs(title = "Travel Time to Work in 2022",
+       subtitle = "by Household Poverty Level",
+       fill = "Poverty Level", 
+       x = "Travel Time (Minutes)", 
+       y = "Count")
 
 ```
 
 # Data Visualization 02
 
 ```{r}
-
+  
 
 ```
 
