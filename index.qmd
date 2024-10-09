@@ -1,18 +1,19 @@
 ---
 title: "Assignment 04"
 subtitle: "Data Science for Public Policy"
-author: "Jamie Jelly Murtha & Stephanie Jamilla"
+authors: "Jamie Jelly Murtha & Stephanie Jamilla"
 format: 
   html:
     code-line-numbers: true
+    body-width: 1600px
 embed-resources: true
 editor_options: 
   chunk_output_type: console
 execute: 
   warning: false
 urlcolor: blue
-
 ---
+
 \vspace{0.1in}
 
 Uploading the IPUMS Data & Exploring It
@@ -23,20 +24,31 @@ Uploading the IPUMS Data & Exploring It
 library(tidyverse)
 library(ipumsr)
 library(srvyr)
+library(labelled)
+library(readxl)
 
+# read in ACS dataset
 ddi <- read_ipums_ddi("usa_00001.xml")
 data <- read_ipums_micro(ddi)
 
 glimpse(data)
+
+# Read in NAICS code lookup table for one of the data viz's below
+naics2 <- read_excel("NAICS_codes.xlsx") |>
+  mutate(NAICS = as.character(NAICS))
+
+# Join NAICS industry names and create weighted tbl_svy object using ACS person
+# weights for some of the plots below
+acs_perweight <- data |>
+  mutate(NAICS = substr(INDNAICS, 1,2)) |>
+  left_join(naics2) |>
+  as_survey_design(weights = PERWT)
 
 ```
 
 # Data Visualization 01
 
 ```{r}
-acs_perweight <- data |>
-  as_survey_design(weights = PERWT)
-
 acs_perweight |>
   filter(TRANTIME > 0) |>
   group_by(YEAR) |>
@@ -52,9 +64,6 @@ acs_perweight |>
        caption = "Source: IPUMS 2022 American Community Survey")
 
 ```
-
-
-
 
 \vspace{0.1in}
 
@@ -85,7 +94,7 @@ acs2022 |>
 
 ```
 
-The above above graph displays how many 2022 ACS survey respondents commuted to work over each five-minute increment, only including respondents who reported a non-zero travel time, and compares across poverty threshold levels. Regardless of poverty status, the majority of respondents' commute times are within a 60 minute period, demonstrating right-skewed data. There do not appear to be major differences between respondents of different poverty levels, though there are notably fewer respondents earning below the poverty threshold that commute over 60 minutes for work compared to their richer counterparts. This may suggest that people with higher commute times may tend to earn above the poverty threshold, though this relationship is inconclusive by solely looking at this histogram.
+The above graph displays how many 2022 ACS survey respondents commuted to work over each five-minute increment, only including respondents who reported a non-zero travel time, and compares across poverty threshold levels. Regardless of poverty status, the majority of respondents' commute times are within a 60 minute period, demonstrating right-skewed data. There do not appear to be major differences between respondents of different poverty levels, though there are notably fewer respondents earning below the poverty threshold that commute over 60 minutes for work compared to their richer counterparts. This may suggest that people with higher commute times may tend to earn above the poverty threshold, though this relationship is inconclusive by solely looking at this histogram.
 
 \vspace{0.1in}
 
@@ -93,18 +102,103 @@ The above above graph displays how many 2022 ACS survey respondents commuted to 
 
 ```{r}
 
+# To analyze the relationships among educational attainment level, household
+# metropolitan status, and travel time to work, clean the data and create
+# concise educational attainment categories
+ed_met_tt <- acs_perweight |>
+  filter(YEAR == 2022 & TRANTIME != 0 & !(METRO %in% c(0,4)) & !(EDUC %in%
+                                                                   c(0,99))) |>
+  mutate(EDUC_concise = case_when(
+    EDUC %in% c(1,2) ~ "Middle School or Less",
+    EDUC %in% c(3,4,5) ~ "Less Than High School",
+    EDUC == 6 ~ "High School Diploma/GED",
+    EDUC == 7 ~ "One Year of College",
+    EDUC == 8 ~ "Two Years of College",
+    EDUC == 9 ~ "Three Years of College",
+    EDUC == 10 ~ "Four Years of College",
+    EDUC == 11 ~ "Five or More Years of College",
+    TRUE ~ NA)) |>
+  mutate(EDUC_concise = factor(EDUC_concise,levels = c(
+    "Middle School or Less",
+    "Less Than High School",
+    "High School Diploma/GED",
+    "One Year of College",
+    "Two Years of College",
+    "Three Years of College",
+    "Four Years of College",
+    "Five or More Years of College")))
 
 ```
-
-
-\vspace{0.1in}
-
-
-# Data Visualization 04
 
 ```{r}
 
+# For each level of educational attainment, pull key stats on travel time to
+# work by household's metropolitan status
+ed_met_tt_stats <- ed_met_tt |>
+  group_by(EDUC_concise, METRO) |>
+  summarize(Median = median(TRANTIME),
+            IQR = IQR(TRANTIME),
+            Min = min(TRANTIME),
+            Max = max(TRANTIME))
 
 ```
 
+```{r fig.width=10, fig.height=10}
+
+# View a boxplot for each combination of educational attainment and household
+# metropolitan status to better understand differences in travel time among
+# these categories
+ggplot(ed_met_tt, mapping = aes(x = EDUC_concise,
+                                y = TRANTIME,
+                                fill = as_factor(METRO),
+                                color = as_factor(METRO))) +
+  geom_boxplot(alpha = 0.2) +
+  labs(title = "U.S. Residents' Travel Time to Work by Educational Attainment\nand Household Metropolitan Status, Excluding Telework",
+       subtitle = "Weighted Responses to the 2022 1-Yr American Community Survey",
+       x = "Highest Educational Attainment\n",
+       y = "\nTravel Time to Work in Minutes\n",
+       color = "Household's Metropolitan Status",
+       caption = expression(italic("Excludes responses from individuals who do not\nleave their homes to work; who do not work;\nand/or whose Metropolitan Status could not be\ndetermined.\n\nSource: IPUMS 2022 American Community Survey"))) +
+  theme(axis.text.x = element_text(angle=45, hjust = 1),
+        plot.caption.position = "plot") +
+  guides(fill = "none")
+
+```
+
+While an initial visual assessment of travel time to work by poverty status does not provide significant indication that these variables could be related, might travel time be related to educational attainment? The above box plots provide the minimum; maximum; median; and interquartile range of travel times reported by respondents to the the 2022 1-Year ACS survey, segmented by their educational attainment. To allow for potential differences in travel times among individuals who live in cities, suburbs, and outside of suburban rings, each educational attainment level's statistics are further segmented by the metropolitan status of the respondents' households. Here, too, we do not observe clear relationships among these variables. While survey respondents with a middle school education or less who live in cities had the highest median travel time, it did not differ by much from those of the other respondent groups. Perhaps notably, no matter their home's metropolitan status, those with a high school diploma experienced nearly the same median travel time to work. We can further assess this question by swapping the "positions" of the educational attainment and metropolitan status variables, to view commute times for each educational attainment level <i>within</i> each metropolitan status.
+
+\vspace{0.1in}
+
+# Data Visualization 04
+
+```{r fig.width=10, fig.height=15}
+
+# View a facet-wrapped scatterplot, displaying respondents' travel times to work
+# by industry and mode of transportation combination to better understand
+# differences in travel time among these categories
+naics_tt <- acs_perweight |>
+  filter(YEAR == 2022 & TRANTIME != 0 & is.na(NAICS_NAME)==FALSE)
+
+naics_tt |>    
+  ggplot(mapping = aes(x = as_factor(TRANWORK),
+                       y = TRANTIME,
+                       color = as_factor(TRANWORK))) +
+  geom_point(alpha = 0, shape = 5) +
+  facet_wrap(~ NAICS_NAME,
+             labeller = labeller(NAICS_NAME = label_wrap_gen(width = 17))) +
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(axis.text.x = element_blank()) +
+  geom_jitter(alpha = 0.1) +
+  labs(title = "U.S. Residents' Travel Time to Work by Industry and Mode of Transportation,\nExcluding Telework",
+       subtitle = "Weighted Responses to the 2022 1-Yr American Community Survey",
+       x = "\nMode of Transportation to Work\n",
+       y = "\nTravel Time to Work in Minutes\n",
+       color = "",
+       caption = expression(italic("Excludes responses from individuals who do not\nleave their homes to work; who do not work;\nand/or whose industry or mode of transportation\ncould not be determined.\n\nSource: IPUMS 2022 American Community Survey"))) +
+  theme(axis.text.x = element_blank(), plot.caption.position = "plot") +
+  guides(color = guide_legend(override.aes = list(alpha=1)))
+
+```
+
+To analyze potential relationships between travel time to work and industry of employment—while accounting for mode of transportation—we plotted travel time to work by mode of transportation, facetted by industry. Although workers across all industries seem to drive more than they use any other mode of transit, those in Mining, quarrying, and oil and gas extraction; Agriculture, forestry, fishing, and hunting; and Utilities appear to overwhelmingly travel by driving. This may be due to lack of proximity to mass transit and other modes of transit. Travel times to work appear relatively consistent across industries, due to the sheer amount of data being displayed in this visual. Further analysis that cross-cuts the data into smaller groups might more effectively highlight differences across in travel times across occupations.
 
