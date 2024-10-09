@@ -13,6 +13,7 @@ execute:
 urlcolor: blue
 
 ---
+\vspace{0.1in}
 
 Uploading the IPUMS Data & Exploring It
 
@@ -21,6 +22,7 @@ Uploading the IPUMS Data & Exploring It
 
 library(tidyverse)
 library(ipumsr)
+library(srvyr)
 
 ddi <- read_ipums_ddi("usa_00001.xml")
 data <- read_ipums_micro(ddi)
@@ -32,6 +34,34 @@ glimpse(data)
 # Data Visualization 01
 
 ```{r}
+acs_perweight <- data |>
+  as_survey_design(weights = PERWT)
+
+acs_perweight |>
+  filter(TRANTIME > 0) |>
+  group_by(YEAR) |>
+  summarize(time_mean = mean(TRANTIME)) |>
+  ggplot(mapping = aes(x = YEAR, y = time_mean)) +
+  geom_line(size = 0.6, color = '#619CFF') +
+  geom_point(size = 2, color = '#619CFF') +
+  theme(panel.background = element_rect(fill = 'white', color = 'gray'),
+        panel.grid.major = element_line(color = 'black', linetype = 'dotted')) +
+  labs(title = "Yearly Average Travel Time to Work (2018-2022)",
+       x = "Year",
+       y = "Average Travel Time (Minutes)",
+       caption = "Source: IPUMS 2022 American Community Survey")
+
+```
+
+
+
+
+\vspace{0.1in}
+
+# Data Visualization 02
+
+```{r}
+
 acs2022 <- data |>
   filter(YEAR == 2022) 
 
@@ -42,22 +72,22 @@ acs2022 |>
     POVERTY >= 100 & POVERTY < 501 ~ "earning 100% to 500% of poverty threshold",
     POVERTY >= 501 ~ "earning 501%+ of poverty threshold")) |>
   ggplot(aes(x = TRANTIME, fill = pov_level)) +
-  geom_histogram(color = "black", alpha = 0.4) +
-  theme(legend.position = "bottom", legend.direction = "vertical") +
+  geom_histogram(binwidth = 5, color = "black", alpha = 0.6) +
+  scale_x_continuous(name = "Total Travel Time (Minutes)", limits=c(0,160), n.breaks = 7) +
+  scale_y_continuous(name = "Count", limits = c(0, 200000)) +
+  theme(legend.position = "bottom", legend.direction = "vertical",
+        panel.background = element_rect(fill = 'white', color = 'gray'),
+        panel.grid.major = element_line(color = 'gray', linetype = 'dashed')) +
   labs(title = "Travel Time to Work in 2022",
        subtitle = "by Household Poverty Level",
        fill = "Poverty Level", 
-       x = "Travel Time (Minutes)", 
-       y = "Count")
+       caption = "Source: IPUMS 2022 American Community Survey")
 
 ```
 
-# Data Visualization 02
+The above above graph displays how many 2022 ACS survey respondents commuted to work over each five-minute increment, only including respondents who reported a non-zero travel time, and compares across poverty threshold levels. Regardless of poverty status, the majority of respondents' commute times are within a 60 minute period, demonstrating right-skewed data. There do not appear to be major differences between respondents of different poverty levels, though there are notably fewer respondents earning below the poverty threshold that commute over 60 minutes for work compared to their richer counterparts. This may suggest that people with higher commute times may tend to earn above the poverty threshold, though this relationship is inconclusive by solely looking at this histogram.
 
-```{r}
-  
-
-```
+\vspace{0.1in}
 
 # Data Visualization 03
 
@@ -65,6 +95,10 @@ acs2022 |>
 
 
 ```
+
+
+\vspace{0.1in}
+
 
 # Data Visualization 04
 
