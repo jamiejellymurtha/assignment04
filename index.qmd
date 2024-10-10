@@ -16,7 +16,11 @@ urlcolor: blue
 
 \vspace{0.1in}
 
-Uploading the IPUMS Data & Exploring It
+Data Sources:
+[2018-2022 1-year American Community Survey via IPUMS](https://usa.ipums.org/usa/index.shtml)
+[NAICS codes](Note to Jamie, please include the link you used in parentheses here)
+
+Below we prep the data by loading it, adding weights, and joining two datasets together
 
 ```{r}
 #| message: false
