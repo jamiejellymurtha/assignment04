@@ -74,7 +74,7 @@ acs_perweight |>
        x = "Year",
        y = "Average Travel Time (Minutes)",
        color = "Race",
-       caption = "Source: IPUMS 2018-2019 1-year American Community Surveys") +
+       caption = "Source: IPUMS 2018-2022 1-year American Community Surveys") +
   guides(linetype = FALSE)
 
 ```
@@ -85,7 +85,7 @@ When investigating how average travel times to work vary across different popula
 
 # Data Visualization 02
 
-```{r}
+```{r fig.height=7}
 
 acs2022 <- acs_perweight |>
   filter(YEAR == 2022) 
@@ -116,7 +116,7 @@ Another population of interest may be comparing respondents from different pover
 
 # Data Visualization 03
 
-```{r fig.height=7}
+```{r}
 
 # To analyze the relationships among educational attainment level, household
 # metropolitan status, and travel time to work, clean the data and create
