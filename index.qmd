@@ -61,7 +61,7 @@ acs_perweight |>
   group_by(YEAR, white) |>
   summarize(time_mean = mean(TRANTIME)) |>
   ggplot(mapping = aes(x = YEAR, y = time_mean, group = white)) +
-  geom_line(mapping = aes(linetype = white, color = white), size = 0.6) +
+  geom_line(mapping = aes(linetype = white, color = white), linewidth = 0.6) +
   geom_point(mapping = aes(color = white), size = 2) +
   scale_color_discrete(limits = c('White Only', 'Not White Only')) +
   theme(panel.background = element_rect(fill = 'white', color = 'gray'),
@@ -75,7 +75,7 @@ acs_perweight |>
 
 ```
 
-When investigating how average travel times to work vary across different populations, one demographic group of interest may be that of race. The above graph displays the average commute times from 2018 to 2022 comparing respondents who only selected White as their race to respondents who did not select only White. While regardless of race, travel times peaked in 2019 followed by a drop in 2020--which is unsurprusing due to the COVID-19 pandemic, average times appear to different between the two racial groups. On average, non-White respondents report having higher average travel times. Though notably, this graph only displays summary statistics and does not include any statistical analysis proving that commute times as significantly higher for non-White repsondents.
+When investigating how average travel times to work vary across different populations, one demographic group of interest may be that of race. The above graph displays the average commute times from 2018 to 2022 comparing respondents who only selected White as their race to respondents who did not select only White. While regardless of race, travel times peaked in 2019 followed by a drop in 2020--which is unsurprising due to the COVID-19 pandemic, average times appear to different between the two racial groups. On average, non-White respondents report having higher average travel times. Though notably, this graph only displays summary statistics and does not include any statistical analysis proving that commute times as significantly higher for non-White respondents.
 
 \vspace{0.1in}
 
