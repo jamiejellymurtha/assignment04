@@ -49,21 +49,33 @@ acs_perweight <- data |>
 # Data Visualization 01
 
 ```{r}
+
 acs_perweight |>
+  mutate(white = 
+    case_when(
+      RACE == 1 ~ "White Only",
+      RACE != 1 ~ "Not White Only"
+    )
+  ) |>
   filter(TRANTIME > 0) |>
-  group_by(YEAR) |>
+  group_by(YEAR, white) |>
   summarize(time_mean = mean(TRANTIME)) |>
-  ggplot(mapping = aes(x = YEAR, y = time_mean)) +
-  geom_line(size = 0.6, color = '#619CFF') +
-  geom_point(size = 2, color = '#619CFF') +
+  ggplot(mapping = aes(x = YEAR, y = time_mean, group = white)) +
+  geom_line(mapping = aes(linetype = white, color = white), size = 0.6) +
+  geom_point(mapping = aes(color = white), size = 2) +
+  scale_color_discrete(limits = c('White Only', 'Not White Only')) +
   theme(panel.background = element_rect(fill = 'white', color = 'gray'),
         panel.grid.major = element_line(color = 'black', linetype = 'dotted')) +
   labs(title = "Yearly Average Travel Time to Work (2018-2022)",
        x = "Year",
        y = "Average Travel Time (Minutes)",
-       caption = "Source: IPUMS 2022 American Community Survey")
+       color = "Race",
+       caption = "Source: IPUMS 2018-2019 1-year American Community Surveys") +
+  guides(linetype = FALSE)
 
 ```
+
+When investigating how average travel times to work vary across different populations, one demographic group of interest may be that of race. The above graph displays the average commute times from 2018 to 2022 comparing respondents who only selected White as their race to respondents who did not select only White. While regardless of race, travel times peaked in 2019 followed by a drop in 2020--which is unsurprusing due to the COVID-19 pandemic, average times appear to different between the two racial groups. On average, non-White respondents report having higher average travel times. Though notably, this graph only displays summary statistics and does not include any statistical analysis proving that commute times as significantly higher for non-White repsondents.
 
 \vspace{0.1in}
 
@@ -71,7 +83,7 @@ acs_perweight |>
 
 ```{r}
 
-acs2022 <- data |>
+acs2022 <- acs_perweight |>
   filter(YEAR == 2022) 
 
 acs2022 |>
@@ -94,13 +106,13 @@ acs2022 |>
 
 ```
 
-The above graph displays how many 2022 ACS survey respondents commuted to work over each five-minute increment, only including respondents who reported a non-zero travel time, and compares across poverty threshold levels. Regardless of poverty status, the majority of respondents' commute times are within a 60 minute period, demonstrating right-skewed data. There do not appear to be major differences between respondents of different poverty levels, though there are notably fewer respondents earning below the poverty threshold that commute over 60 minutes for work compared to their richer counterparts. This may suggest that people with higher commute times may tend to earn above the poverty threshold, though this relationship is inconclusive by solely looking at this histogram.
+Another population of interest may be comparing respondents from different poverty levels. The above graph displays how many 2022 ACS survey respondents commuted to work over each five-minute increment, only including respondents who reported a non-zero travel time, and compares across poverty threshold levels. Regardless of poverty status, the majority of respondents' commute times are within a 60 minute period, demonstrating right-skewed data. There do not appear to be major differences between respondents of different poverty levels, though there are notably fewer respondents earning below the poverty threshold that commute over 60 minutes for work compared to their richer counterparts. This may suggest that people with higher commute times may tend to earn above the poverty threshold, though this relationship is inconclusive by solely looking at this histogram.
 
 \vspace{0.1in}
 
 # Data Visualization 03
 
-```{r}
+```{r fig.height=6}
 
 # To analyze the relationships among educational attainment level, household
 # metropolitan status, and travel time to work, clean the data and create
