@@ -112,7 +112,7 @@ Another population of interest may be comparing respondents from different pover
 
 # Data Visualization 03
 
-```{r fig.height=6}
+```{r fig.height=7}
 
 # To analyze the relationships among educational attainment level, household
 # metropolitan status, and travel time to work, clean the data and create
