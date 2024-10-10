@@ -18,9 +18,9 @@ urlcolor: blue
 
 Data Sources:
 [2018-2022 1-year American Community Survey via IPUMS](https://usa.ipums.org/usa/index.shtml)
-[NAICS codes](Note to Jamie, please include the link you used in parentheses here)
+[NAICS codes](https://www.census.gov/naics/?58967?yearbck=2022)
 
-Below we prep the data by loading it, adding weights, and joining two datasets together
+Below we prep the data by loading it, adding weights, and joining two datasets together:
 
 ```{r}
 #| message: false
@@ -32,7 +32,8 @@ library(labelled)
 library(readxl)
 
 # read in ACS dataset
-ddi <- read_ipums_ddi("usa_00001.xml")
+
+ddi <- read_ipums_ddi("data/usa_00001.xml")
 data <- read_ipums_micro(ddi)
 
 glimpse(data)
@@ -116,11 +117,11 @@ Another population of interest may be comparing respondents from different pover
 
 # Data Visualization 03
 
+To next analyze potential relationships among educational attainment, household metropolitan status, and travel time to work, we filter the data and create more concise educational attainment categories:
+
 ```{r}
 
-# To analyze the relationships among educational attainment level, household
-# metropolitan status, and travel time to work, clean the data and create
-# concise educational attainment categories
+# filter data and create new educational attainment categories
 ed_met_tt <- acs_perweight |>
   filter(YEAR == 2022 & TRANTIME != 0 & !(METRO %in% c(0,4)) & !(EDUC %in%
                                                                    c(0,99))) |>
@@ -146,10 +147,11 @@ ed_met_tt <- acs_perweight |>
 
 ```
 
+We can view travel time to work statistics for workers that fall into each unique educational attainment-metropolitan status group:
+
 ```{r}
 
-# For each level of educational attainment, pull key stats on travel time to
-# work by household's metropolitan status
+# travel time statistics by educational attainment and household metropolitan status
 ed_met_tt_stats <- ed_met_tt |>
   group_by(EDUC_concise, METRO) |>
   summarize(Median = median(TRANTIME),
@@ -159,11 +161,11 @@ ed_met_tt_stats <- ed_met_tt |>
 
 ```
 
+However, these data are a bit hard to draw conclusions from in a simple table. We can map boxplots of travel time statistics by each educational attainment level and each metropolitan status within those levels:
+
 ```{r fig.width=10, fig.height=10}
 
-# View a boxplot for each combination of educational attainment and household
-# metropolitan status to better understand differences in travel time among
-# these categories
+# ggplot of travel time by educational attainment and household metropolitan status
 ggplot(ed_met_tt, mapping = aes(x = EDUC_concise,
                                 y = TRANTIME,
                                 fill = as_factor(METRO),
@@ -181,17 +183,17 @@ ggplot(ed_met_tt, mapping = aes(x = EDUC_concise,
 
 ```
 
-While an initial visual assessment of travel time to work by poverty status does not provide significant indication that these variables could be related, might travel time be related to educational attainment? The above box plots provide the minimum; maximum; median; and interquartile range of travel times reported by respondents to the the 2022 1-Year ACS survey, segmented by their educational attainment. To allow for potential differences in travel times among individuals who live in cities, suburbs, and outside of suburban rings, each educational attainment level's statistics are further segmented by the metropolitan status of the respondents' households. Here, too, we do not observe clear relationships among these variables. While survey respondents with a middle school education or less who live in cities had the highest median travel time, it did not differ by much from those of the other respondent groups. Perhaps notably, no matter their home's metropolitan status, those with a high school diploma experienced nearly the same median travel time to work. We can further assess this question by swapping the "positions" of the educational attainment and metropolitan status variables, to view commute times for each educational attainment level <i>within</i> each metropolitan status.
+The above box plots provide the minimum; maximum; median; and interquartile range of travel times reported by respondents to the the 2022 1-Year ACS survey, segmented by their educational attainment. To allow for potential differences in travel times among individuals who live in cities, suburbs, and outside of suburban rings, each educational attainment level's statistics are further segmented by the metropolitan status of respondents' households. Here, too, we do not observe clear relationships among these variables. While survey respondents with a middle school education or less who live in cities had the highest median travel time, it did not differ by much from those of the other respondent groups. No matter their home's metropolitan status, those with a high school diploma experienced nearly the same median travel time to work. We might further assess potential relationships among these variables by swapping their "positions" in the plot, to view commute times for each educational attainment level <i>within</i> each metropolitan status.
 
 \vspace{0.1in}
 
 # Data Visualization 04
 
+Finally, to analyze potential relationships between travel time to work and industry of employment—while accounting for mode of transportation—we can plot travel time to work by mode of transportation, facetted by industry: 
+
 ```{r fig.width=10, fig.height=15}
 
-# View a facet-wrapped scatterplot, displaying respondents' travel times to work
-# by industry and mode of transportation combination to better understand
-# differences in travel time among these categories
+# ggplot of travel time by mode of transportation and industry of employment
 naics_tt <- acs_perweight |>
   filter(YEAR == 2022 & TRANTIME != 0 & is.na(NAICS_NAME)==FALSE)
 
@@ -216,5 +218,5 @@ naics_tt |>
 
 ```
 
-To analyze potential relationships between travel time to work and industry of employment—while accounting for mode of transportation—we plotted travel time to work by mode of transportation, facetted by industry. Although workers across all industries seem to drive more than they use any other mode of transit, those in Mining, quarrying, and oil and gas extraction; Agriculture, forestry, fishing, and hunting; and Utilities appear to overwhelmingly travel by driving. This may be due to lack of proximity to mass transit and other modes of transit. Travel times to work appear relatively consistent across industries, due to the sheer amount of data being displayed in this visual. Further analysis that cross-cuts the data into smaller groups might more effectively highlight differences across in travel times across occupations.
+Although workers across all industries seem to drive more than they use any other mode of transit, those in mining, quarrying, and oil and gas extraction; agriculture, forestry, fishing, and hunting; and utilities appear to overwhelmingly travel by driving. This may be due to lack of proximity to mass transit and other modes of transit. Travel times to work appear relatively consistent across industries, due to the sheer amount of data being displayed in this visual. Further analysis that cross-cuts the data into smaller groups might more effectively highlight differences in travel times across occupations.
 
