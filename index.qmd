@@ -16,8 +16,8 @@ urlcolor: blue
 
 \vspace{0.1in}
 
-Data Sources:
-[2018-2022 1-year American Community Survey via IPUMS](https://usa.ipums.org/usa/index.shtml)
+Data Sources:  
+[2018-2022 1-year American Community Survey via IPUMS](https://usa.ipums.org/usa/index.shtml)  
 [NAICS codes](https://www.census.gov/naics/?58967?yearbck=2022)
 
 Below we prep the data by loading it, adding weights, and joining two datasets together:
